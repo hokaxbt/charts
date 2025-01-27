@@ -1,0 +1,5 @@
+# Loki version
+version: "3.3.2"
+
+# Loki S3 secret
+secret: loki-s3

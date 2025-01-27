@@ -1,0 +1,5 @@
+apiVersion: v2
+name: loki
+description: Hoka's helm chart to deploy Grafana Loki
+type: application
+version: "0.0.1"
