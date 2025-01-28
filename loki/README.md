@@ -55,3 +55,7 @@ kubectl get pods -n grafana -o wide
     ```sh
     curl "http://127.0.0.1:3100/loki/api/v1/query_range" --data-urlencode 'query={job="test"}' | jq .data.result
     ```
+
+## References
+
+- [Grafana Loki configuration parameters](https://grafana.com/docs/loki/latest/configure/)
