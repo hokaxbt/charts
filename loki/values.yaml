@@ -1,5 +1,13 @@
 # Loki version
 version: "3.3.2"
 
+# Replica count
+replicas: 3
+
 # Loki S3 secret
 secret: loki-s3
+
+# Loki volume
+volume:
+  size: 1Gi
+  storageClass: null

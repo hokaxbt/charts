@@ -15,8 +15,8 @@ data:
       http_listen_port: 3100
 
     common:
-      path_prefix: /tmp/loki
-      replication_factor: 1
+      path_prefix: /loki
+      replication_factor: {{ .Values.replicas }}
       storage:
         s3:
           s3forcepathstyle: false
@@ -27,7 +27,11 @@ data:
           secret_access_key: ${S3_SECRET_KEY}
       ring:
         kvstore:
-          store: inmemory
+          store: memberlist
+    
+    memberlist:
+      join_members:
+        - dnssrv+loki.{{ .Release.Namespace }}.svc.cluster.local:7946
 
     limits_config:
       allow_structured_metadata: true

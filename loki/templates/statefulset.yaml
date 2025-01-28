@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki
+  labels:
+    {{- include "labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "selectorLabels" . | nindent 6 }}
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      labels:
+        {{- include "labels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      volumes:
+        - name: config
+          configMap: 
+            name: {{ include "name" . }}
+            items:
+              - key: loki.yaml
+                path: loki.yaml
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  {{- include "selectorLabels" . | nindent 18 }}
+              topologyKey: kubernetes.io/hostname
+      # TODO: add node affinity
+      containers:
+        - name: loki
+          image: docker.io/grafana/loki:{{ .Values.version }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - -config.file=/etc/loki/loki.yaml
+            - -target=all
+            - -config.expand-env=true
+          volumeMounts:
+            - name: data
+              mountPath: /loki
+            - name: config
+              mountPath: /etc/loki
+          securityContext:
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 3100
+              name: http
+              protocol: TCP
+            - containerPort: 7946
+              name: gossip
+              protocol: TCP
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "250Mi"
+              cpu: "100m"
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
+          env:
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret }}
+                  key: S3_BUCKET
+            - name: S3_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret }}
+                  key: S3_ENDPOINT
+            - name: S3_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret }}
+                  key: S3_REGION
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret }}
+                  key: S3_ACCESS_KEY
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret }}
+                  key: S3_SECRET_KEY
+
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "labels" . | nindent 10 }}
+      spec:
+        accessModes: 
+          - ReadWriteOnce
+        storageClassName: {{ .Values.volume.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.volume.size }}

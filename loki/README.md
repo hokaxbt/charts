@@ -23,15 +23,15 @@
 Deploy Loki using the following command:
 
 ```sh
-helm install loki ./loki -n grafana 
+helm install loki ./loki --set volume.storageClass="openebs-lvm" -n grafana
 ```
 
 ## Verification
 
-Check the deployments to ensure they are healthy:
+Check the deployments to ensure they are healthy and distributed across 3 nodes:
 
 ```sh
-kubectl get pods -n grafana
+kubectl get pods -n grafana -o wide
 ```
 
 ## Sending Logs
