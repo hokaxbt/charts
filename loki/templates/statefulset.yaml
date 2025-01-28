@@ -9,6 +9,7 @@ spec:
     matchLabels:
       {{- include "selectorLabels" . | nindent 6 }}
   replicas: {{ .Values.replicas }}
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
@@ -36,7 +37,6 @@ spec:
                 matchLabels:
                   {{- include "selectorLabels" . | nindent 18 }}
               topologyKey: kubernetes.io/hostname
-      # TODO: add node affinity
       containers:
         - name: loki
           image: docker.io/grafana/loki:{{ .Values.version }}
@@ -63,13 +63,7 @@ spec:
             - containerPort: 7946
               name: gossip
               protocol: TCP
-          resources:
-            requests:
-              memory: "100Mi"
-              cpu: "10m"
-            limits:
-              memory: "250Mi"
-              cpu: "100m"
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           startupProbe:
             httpGet:
               path: /ready
@@ -94,11 +88,6 @@ spec:
             timeoutSeconds: 1
             failureThreshold: 3
           env:
-            - name: S3_BUCKET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret }}
-                  key: S3_BUCKET
             - name: S3_ENDPOINT
               valueFrom:
                 secretKeyRef:

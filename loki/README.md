@@ -11,7 +11,7 @@
 2. Create a secret for Loki S3:
 
     ```sh
-    kubectl create secret generic loki-s3 -n grafana \
+    kubectl create secret generic hetzner-s3-credentials -n grafana \
         --from-literal=S3_ENDPOINT='XXXX' \
         --from-literal=S3_REGION='XXXX' \
         --from-literal=S3_ACCESS_KEY='XXXX' \
@@ -23,7 +23,24 @@
 Deploy Loki using the following command:
 
 ```sh
-helm install loki ./loki --set volume.storageClass="openebs-lvm" -n grafana
+helm install loki ./loki \
+    --set volume.storageClass="openebs-lvm" \
+    --set s3.buckets.chunks="kubernetes-loki-chunks" \
+    --set s3.buckets.rulers="kubernetes-loki-rulers" \
+    --set secret="hetzner-s3-credentials" \
+    -n grafana
+```
+
+Dry run:
+
+```sh
+helm install loki ./loki \
+    --set volume.storageClass="openebs-lvm" \
+    --set s3.buckets.rulers="test-rulers-bucket" \
+    --set s3.buckets.chunks="test-chunks-bucket" \
+    --set secret="hetzner-s3-credentials" \
+    -n grafana \
+    --dry-run
 ```
 
 ## Verification

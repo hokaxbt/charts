@@ -19,3 +19,7 @@ app.kubernetes.io/version: {{ .Values.image.tag | default .Chart.AppVersion | qu
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
+
+{{- define "config" -}}
+{{ tpl (.Values.config | toYaml) . | toYaml }}
+{{- end }}
